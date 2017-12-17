@@ -32,6 +32,8 @@ public class LogInActivity extends ActivityWithToastAlert {
         setUpInputDetectionHandler();
         setUpButtonClickHandler();
         setLoading(false);
+        if (!usernameHasMinChars())
+            allowClickingButtonIf(false);
     }
 
     private void setUpButtonClickHandler() {
@@ -59,9 +61,16 @@ public class LogInActivity extends ActivityWithToastAlert {
             @Override
             public void usernameDenied(String deniedUsername, String error) {
                 setLoading(false);
+                clearUsernameField();
                 alert("Username was denied: " + error);
-                usernameField.setText("");
             }
+        });
+    }
+
+    private void clearUsernameField() {
+        runOnUiThread(() -> {
+            usernameField.setText("");
+            allowClickingButtonIf(false);
         });
     }
 
@@ -69,27 +78,30 @@ public class LogInActivity extends ActivityWithToastAlert {
         usernameField.addTextChangedListener(new TextWatcher() {
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                if (usernameField.getText().toString().length() < 3) {
-                    allowClickingButton(false);
-                } else {
-                    allowClickingButton(true);
-                }
+                allowClickingButtonIf(usernameHasMinChars());
             }
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+            @Override
             public void afterTextChanged(Editable editable) {}
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
         });
     }
 
-    private void allowClickingButton(boolean allow) {
-        int color = allow ? R.color.colorAccent : R.color.disabledButton;
-        int textColor = allow ? Color.WHITE : Color.GRAY;
-        letsGoButton.setEnabled(allow);
-        letsGoButton.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(color)));
-        letsGoButton.setTextColor(textColor);
+    private boolean usernameHasMinChars() {
+        return usernameField.getText().toString().length() >= 3;
+    }
+
+    private void allowClickingButtonIf(boolean allow) {
+        runOnUiThread(() -> {
+            int color = allow ? R.color.colorAccent : R.color.disabledButton;
+            int textColor = allow ? Color.WHITE : Color.GRAY;
+            letsGoButton.setEnabled(allow);
+            letsGoButton.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(color)));
+            letsGoButton.setTextColor(textColor);
+        });
     }
 
     private void setLoading(boolean loading) {
-        allowClickingButton(loading);
-        loadingWheel.setVisibility(loading ? View.VISIBLE : View.INVISIBLE);
+        allowClickingButtonIf(!loading);
+        runOnUiThread(() -> loadingWheel.setVisibility(loading ? View.VISIBLE : View.INVISIBLE));
     }
 }

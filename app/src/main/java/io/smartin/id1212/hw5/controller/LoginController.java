@@ -22,29 +22,25 @@ public class LoginController {
             request.usernameAccepted(username);
             return;
         }
-        AsyncTask.execute(() -> {
-            dbRef.child("users").runTransaction(new Transaction.Handler() {
-                @Override
-                public Transaction.Result doTransaction(MutableData mutableData) {
-                    if (mutableData == null) {
-                        return Transaction.success(mutableData);
-                    }
-                    if (mutableData.hasChild(username)) {
-                        request.usernameDenied(username, "The username already exists");
-                    } else {
-                        mutableData.child(username).setValue(true);
-                    }
+        dbRef.child("users").runTransaction(new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(MutableData mutableData) {
+                if (mutableData.getValue() == null) {
                     return Transaction.success(mutableData);
                 }
-
-                @Override
-                public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
-                    if (databaseError == null) {
-                        storedUsername = username;
-                        request.usernameAccepted(username);
-                    }
+                if (mutableData.hasChild(username)) {
+                    request.usernameDenied(username,
+                            "That username is already taken");
+                    return Transaction.abort();
                 }
-            });
+                mutableData.child(username).setValue(true);
+                storedUsername = username;
+                request.usernameAccepted(username);
+                return Transaction.success(mutableData);
+            }
+
+            @Override
+            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {}
         });
     }
 

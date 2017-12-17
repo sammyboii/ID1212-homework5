@@ -25,28 +25,26 @@ public class ChatController {
     public void sendMessage (String message) throws NotLoggedInException, IllegalMessageException {
         if (!loggedIn()) throw new NotLoggedInException("You are not logged in");
         if (message.length() == 0) throw new IllegalMessageException("Message is too short");
-        AsyncTask.execute(() -> dbRef.child("messages").push().setValue(new Message(username, message)));
+        dbRef.child("messages").push().setValue(new Message(username, message));
     }
 
     public void logOut () throws NotLoggedInException {
         if (!loggedIn()) throw new NotLoggedInException("You are not logged in");
-        AsyncTask.execute(() -> dbRef.child("users").child(username).removeValue());
+        dbRef.child("users").child(username).removeValue();
     }
 
     public void listenForMessages(MessageListener messageListener) throws NotLoggedInException {
         if (!loggedIn()) throw new NotLoggedInException("You are not logged in");
-        AsyncTask.execute(() -> {
-            dbRef.child("messages").addChildEventListener(new ChildEventListener() {
-                @Override
-                public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                    Message message = dataSnapshot.getValue(Message.class);
-                    messageListener.onMessage(message);
-                }
-                public void onChildChanged(DataSnapshot dataSnapshot, String s) {}
-                public void onChildRemoved(DataSnapshot dataSnapshot) {}
-                public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
-                public void onCancelled(DatabaseError databaseError) {}
-            });
+        dbRef.child("messages").addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                Message message = dataSnapshot.getValue(Message.class);
+                messageListener.onMessage(message);
+            }
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {}
+            public void onChildRemoved(DataSnapshot dataSnapshot) {}
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
+            public void onCancelled(DatabaseError databaseError) {}
         });
     }
 

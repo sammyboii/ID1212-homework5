@@ -3,6 +3,7 @@ package io.smartin.id1212.hw5.view;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -63,15 +64,15 @@ public class ChatActivity extends ActivityWithToastAlert {
         newMessage.addTextChangedListener(new TextWatcher() {
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                if (newMessage.getText().toString().length() == 0) {
-                    allowPressingSend(false);
-                } else {
-                    allowPressingSend(true);
-                }
+                allowPressingSend(!messageFieldIsEmpty());
             }
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
             public void afterTextChanged(Editable editable) {}
         });
+    }
+
+    private boolean messageFieldIsEmpty() {
+        return newMessage.getText().toString().length() == 0;
     }
 
     private void setUpQuitButtonHandler() {
@@ -96,19 +97,25 @@ public class ChatActivity extends ActivityWithToastAlert {
     }
 
     private void allowPressingSend(boolean allow) {
-        int color = allow ? R.color.colorAccent : R.color.disabledButton;
-        int textcolor = allow ? Color.WHITE : Color.GRAY;
-        sendMessage.setEnabled(allow);
-        sendMessage.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(color)));
-        sendMessage.setTextColor(textcolor);
+        runOnUiThread(() -> {
+            int color = allow ? R.color.colorAccent : R.color.disabledButton;
+            int textcolor = allow ? Color.WHITE : Color.GRAY;
+            sendMessage.setEnabled(allow);
+            sendMessage.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(color)));
+            sendMessage.setTextColor(textcolor);
+        });
     }
 
     private void renderMessage(Message message) {
         String format = "(" + message.getFormattedTime() + ") " + message.getFrom() + ": " + message.getMessage() + "\n";
-        messageList.append(format);
+        runOnUiThread(() -> messageList.append(format));
     }
 
     private void clearInput() {
-        newMessage.setText("");
+        runOnUiThread(() -> {
+            newMessage.setText("");
+            allowPressingSend(false);
+        });
+
     }
 }
