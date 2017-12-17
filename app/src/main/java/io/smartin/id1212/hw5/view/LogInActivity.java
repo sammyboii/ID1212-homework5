@@ -35,17 +35,13 @@ public class LogInActivity extends ActivityWithToastAlert {
     }
 
     private void setUpButtonClickHandler() {
-        letsGoButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                allowClickingButton(false);
-                loadingWheel.setVisibility(View.VISIBLE);
-                final String username = usernameField.getText().toString();
-                try {
-                    logIn(username);
-                } catch (IllegalUsernameException e) {
-                    alert(e.getMessage());
-                }
+        letsGoButton.setOnClickListener(view -> {
+            setLoading(true);
+            final String username = usernameField.getText().toString();
+            try {
+                logIn(username);
+            } catch (IllegalUsernameException e) {
+                alert(e.getMessage());
             }
         });
     }
@@ -60,7 +56,6 @@ public class LogInActivity extends ActivityWithToastAlert {
                 startActivity(chatView);
                 alert("Logged in as " + acceptedUsername);
             }
-
             @Override
             public void usernameDenied(String deniedUsername, String error) {
                 setLoading(false);
@@ -80,9 +75,7 @@ public class LogInActivity extends ActivityWithToastAlert {
                     allowClickingButton(true);
                 }
             }
-            @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
-            @Override
             public void afterTextChanged(Editable editable) {}
         });
     }

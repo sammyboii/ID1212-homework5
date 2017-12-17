@@ -7,24 +7,18 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.method.ScrollingMovementMethod;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import com.google.firebase.database.ChildEventListener;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-
 import io.smartin.id1212.hw5.R;
-import io.smartin.id1212.hw5.controller.FirebaseController;
+import io.smartin.id1212.hw5.controller.ChatController;
 import io.smartin.id1212.hw5.exceptions.IllegalMessageException;
 import io.smartin.id1212.hw5.exceptions.NotLoggedInException;
 import io.smartin.id1212.hw5.dto.Message;
 
 public class ChatActivity extends ActivityWithToastAlert {
-    private FirebaseController firebase;
+    private ChatController controller;
     private TextView messageList;
     private EditText newMessage;
     private Button sendMessage;
@@ -33,7 +27,7 @@ public class ChatActivity extends ActivityWithToastAlert {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        firebase = new FirebaseController(getIntent().getStringExtra("username"));
+        controller = new ChatController(getIntent().getStringExtra("username"));
         setContentView(R.layout.activity_chat);
         initComponents();
         listenForMessages();
@@ -54,16 +48,13 @@ public class ChatActivity extends ActivityWithToastAlert {
     }
 
     private void setUpSendMessageHandler() {
-        sendMessage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String message = newMessage.getText().toString();
-                try {
-                    firebase.sendMessage(message);
-                    clearInput();
-                } catch (NotLoggedInException | IllegalMessageException e) {
-                    alert(e.getMessage());
-                }
+        sendMessage.setOnClickListener(view -> {
+            String message = newMessage.getText().toString();
+            try {
+                controller.sendMessage(message);
+                clearInput();
+            } catch (NotLoggedInException | IllegalMessageException e) {
+                alert(e.getMessage());
             }
         });
     }
@@ -78,45 +69,30 @@ public class ChatActivity extends ActivityWithToastAlert {
                     allowPressingSend(true);
                 }
             }
-            @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
-            @Override
             public void afterTextChanged(Editable editable) {}
         });
     }
 
     private void setUpQuitButtonHandler() {
-        quitButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                try {
-                    firebase.logOut();
-                } catch (NotLoggedInException e) {
-                    alert("You were never logged in to begin with!");
-                }
-                Intent goToLogin = new Intent(ChatActivity.this, LogInActivity.class);
-                startActivity(goToLogin);
-                alert("Logged out");
+        quitButton.setOnClickListener(view -> {
+            try {
+                controller.logOut();
+            } catch (NotLoggedInException e) {
+                alert("You were never logged in to begin with!");
             }
+            Intent goToLogin = new Intent(ChatActivity.this, LogInActivity.class);
+            startActivity(goToLogin);
+            alert("Logged out");
         });
     }
 
     private void listenForMessages() {
-        DatabaseReference ref = firebase.getMessagesReference();
-        ref.addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                renderMessage(dataSnapshot.getValue(Message.class));
-            }
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {}
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {}
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
-            @Override
-            public void onCancelled(DatabaseError databaseError) {}
-        });
+        try {
+            controller.listenForMessages(this::renderMessage);
+        } catch (NotLoggedInException e) {
+            alert("You are not logged in!");
+        }
     }
 
     private void allowPressingSend(boolean allow) {
