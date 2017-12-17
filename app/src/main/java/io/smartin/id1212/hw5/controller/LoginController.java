@@ -40,7 +40,8 @@ public class LoginController {
             }
 
             @Override
-            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {}
+            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
+            }
         });
     }
 
