@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">HW5</string>
+    <string name="lets_go">Let\'s go</string>
+    <string name="pick_a_username">Pick a username</string>
+</resources>
